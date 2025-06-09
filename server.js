@@ -10,6 +10,7 @@ const ideaRoutes = require('./routes/ideas');
 const groupRoutes = require('./routes/groups');
 
 app.use('/api/ideas', ideaRoutes);
+console.log('groupRoutes is:', groupRoutes);
 app.use('/api/groups', groupRoutes);
 
 const PORT = process.env.PORT || 5000;
