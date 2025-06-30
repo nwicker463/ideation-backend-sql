@@ -9,8 +9,6 @@ app.use(express.json());
 const ideaRoutes = require('./routes/ideas');
 const groupRoutes = require('./routes/groups');
 
-//console.log('groupRoutes is:', groupRoutes);
-
 app.use('/api/ideas', ideaRoutes);
 app.use('/api/groups', groupRoutes);
 
