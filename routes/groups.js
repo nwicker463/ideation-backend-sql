@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
 // Get all groups (optional convenience route)
 router.get('/', async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM groups ORDER BY created_at ASC');
+    const result = await db.query('SELECT * FROM groups ORDER BY name ASC');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
