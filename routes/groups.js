@@ -27,4 +27,34 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get group timer start time
+router.get('/:id/timer', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      'SELECT timer_start FROM groups WHERE id = $1',
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
+
+    res.json({ timerStart: result.rows[0].timer_start });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Start the timer for a group
+router.post('/:id/timer/start', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      'UPDATE groups SET timer_start = NOW() WHERE id = $1 RETURNING timer_start',
+      [id]
+    );
+    res.json({ timerStart: result.rows[0].timer_start });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
