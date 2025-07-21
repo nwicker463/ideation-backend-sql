@@ -38,6 +38,17 @@ router.post('/waiting', async (req, res) => {
   res.json({ success: true });
 });
 
+// Get all users in the waiting list
+router.get('/', async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM waiting_users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Failed to fetch waiting users:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get group assignment for a user
 router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
