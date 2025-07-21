@@ -38,24 +38,25 @@ router.post('/waiting', async (req, res) => {
   res.json({ success: true });
 });
 
-// GET /api/waiting/:userId
-router.get('/waiting/:userId', async (req, res) => {
+// Get group assignment for a user
+router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
-  const result = await db.query(
-    'SELECT group_id FROM waiting_users WHERE user_id = $1',
-    [userId]
-  );
+  try {
+    const result = await db.query(
+      'SELECT group_id FROM waiting_users WHERE user_id = $1',
+      [userId]
+    );
 
-  if (result.rows.length === 0) {
-    return res.status(404).json({ error: 'User not found in waiting list' });
-  }
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found in waiting list' });
+    }
 
-  const groupId = result.rows[0].group_id;
-  if (groupId) {
-    res.json({ groupId });
-  } else {
-    res.json({ groupId: null });
+    res.json({ groupId: result.rows[0].group_id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 module.exports = router;
