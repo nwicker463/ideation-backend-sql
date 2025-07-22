@@ -2,15 +2,24 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// POST /api/waiting
-router.post('/waiting', async (req, res) => {
+// Add a user to the waiting list
+router.post('/', async (req, res) => {
   const { userId } = req.body;
 
-  // Add user to queue
-  await db.query(
-    'INSERT INTO waiting_users (user_id) VALUES ($1)',
-    [userId]
-  );
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required' });
+  }
+
+  try {
+    const result = await db.query(
+      'INSERT INTO waiting_users (user_id) VALUES ($1) RETURNING *',
+      [userId]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Failed to add user to waiting list:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 
   // Count users waiting without a group
   const result = await db.query(
