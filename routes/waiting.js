@@ -26,16 +26,16 @@ router.post('/', async (req, res) => {
     'SELECT * FROM waiting_users WHERE group_id IS NULL ORDER BY created_at ASC'
   );
 
-  // If there are 3 waiting users, assign a group
-  if (result.rows.length >= 3) {
+  // If there are 2 waiting users, assign a group
+  if (result.rows.length >= 2) {
     const group = await db.query(
       'INSERT INTO groups (name) VALUES ($1) RETURNING id',
       [`Group ${Date.now()}`]
     );
     const groupId = group.rows[0].id;
 
-    // Assign the group to the first 3 users
-    const usersToAssign = result.rows.slice(0, 3);
+    // Assign the group to the first 2 users
+    const usersToAssign = result.rows.slice(0, 2);
     for (const user of usersToAssign) {
       await db.query(
         'UPDATE waiting_users SET group_id = $1 WHERE id = $2',
