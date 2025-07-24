@@ -67,6 +67,8 @@ router.get('/:userId', async (req, res) => {
       [userId]
     );
 
+    console.log('Fetched user info:', result.rows[0]);
+
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found in waiting list' });
     }
