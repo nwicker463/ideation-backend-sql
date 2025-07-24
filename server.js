@@ -3,12 +3,21 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const allowedOrigins = ['https://ideation-vite-frontend.vercel.app'];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://ideation-vite-frontend.vercel.app'
+];
 
 app.use(cors({
-  origin: allowedOrigins,
-  //methods: ['GET', 'POST'],
-  credentials: true,
+  origin: function (origin, callback) {
+    // Allow undefined origin for mobile apps or curl requests
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
 app.use(express.json());
 
