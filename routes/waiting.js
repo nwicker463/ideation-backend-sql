@@ -11,40 +11,47 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const result = await db.query(
+    // Add user to waiting list
+    const insertResult = await db.query(
       'INSERT INTO waiting_users (user_id) VALUES ($1) RETURNING *',
       [userId]
     );
-    res.status(201).json(result.rows[0]);
+
+    // Count users waiting without a group
+    const waitingResult = await db.query(
+      'SELECT * FROM waiting_users WHERE group_id IS NULL ORDER BY created_at ASC'
+    );
+
+    let groupAssigned = false;
+
+    // If there are 2 waiting users, assign a group
+    if (waitingResult.rows.length >= 2) {
+      const group = await db.query(
+        'INSERT INTO groups (name) VALUES ($1) RETURNING id',
+        [`Group ${Date.now()}`]
+      );
+      const groupId = group.rows[0].id;
+
+      const usersToAssign = waitingResult.rows.slice(0, 2);
+      for (const user of usersToAssign) {
+        await db.query(
+          'UPDATE waiting_users SET group_id = $1 WHERE id = $2',
+          [groupId, user.id]
+        );
+      }
+
+      groupAssigned = true;
+    }
+
+    // ✅ Respond only once
+    res.status(201).json({
+      user: insertResult.rows[0],
+      groupAssigned
+    });
   } catch (err) {
     console.error('Failed to add user to waiting list:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
-
-  // Count users waiting without a group
-  const result = await db.query(
-    'SELECT * FROM waiting_users WHERE group_id IS NULL ORDER BY created_at ASC'
-  );
-
-  // If there are 2 waiting users, assign a group
-  if (result.rows.length >= 2) {
-    const group = await db.query(
-      'INSERT INTO groups (name) VALUES ($1) RETURNING id',
-      [`Group ${Date.now()}`]
-    );
-    const groupId = group.rows[0].id;
-
-    // Assign the group to the first 2 users
-    const usersToAssign = result.rows.slice(0, 2);
-    for (const user of usersToAssign) {
-      await db.query(
-        'UPDATE waiting_users SET group_id = $1 WHERE id = $2',
-        [groupId, user.id]
-      );
-    }
-  }
-
-  res.json({ success: true });
 });
 
 // Get all users in the waiting list
