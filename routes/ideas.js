@@ -3,16 +3,37 @@ const router = express.Router();
 const db = require('../db');
 
 
-// Get all ideas for a specific group
-router.get('/group/:groupId', async (req, res) => {
+// Get ideas for a group structured as a tree
+router.get('/group/:groupId/tree', async (req, res) => {
   const { groupId } = req.params;
+
   try {
     const result = await db.query(
       'SELECT * FROM ideas WHERE group_id = $1 ORDER BY created_at ASC',
       [groupId]
     );
-    res.json(result.rows);
+
+    const ideas = result.rows;
+
+    // Convert flat list into tree structure
+    const ideaMap = {};
+    ideas.forEach(idea => {
+      idea.children = [];
+      ideaMap[idea.id] = idea;
+    });
+
+    const tree = [];
+    ideas.forEach(idea => {
+      if (idea.parent_id) {
+        ideaMap[idea.parent_id]?.children.push(idea);
+      } else {
+        tree.push(idea);
+      }
+    });
+
+    res.json(tree);
   } catch (err) {
+    console.error('Error building idea tree:', err);
     res.status(500).json({ error: err.message });
   }
 });
