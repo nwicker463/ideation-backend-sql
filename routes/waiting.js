@@ -5,33 +5,27 @@ const db = require('../db');
 // Add a user to the waiting list
 router.post('/', async (req, res) => {
   const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ error: 'userId is required' });
-  }
+  if (!userId) return res.status(400).json({ error: 'userId is required' });
 
   try {
-    // Add user to waiting list
-    const insertResult = await db.query(
+    const result = await db.query(
       'INSERT INTO waiting_users (user_id) VALUES ($1) RETURNING *',
       [userId]
     );
 
-    // Count users waiting without a group
-    const waitingResult = await db.query(
+    // Check if a group can be formed
+    const waiting = await db.query(
       'SELECT * FROM waiting_users WHERE group_id IS NULL ORDER BY created_at ASC'
     );
 
-    let groupAssigned = false;
-
-    if (result.rows.length >= 3) {
+    if (waiting.rows.length >= 3) {
       const group = await db.query(
         'INSERT INTO groups (name) VALUES ($1) RETURNING id',
         [`Group ${Date.now()}`]
       );
       const groupId = group.rows[0].id;
 
-      const usersToAssign = result.rows.slice(0, 3);
+      const usersToAssign = waiting.rows.slice(0, 3);
       const labels = ['User A', 'User B', 'User C'];
 
       for (let i = 0; i < usersToAssign.length; i++) {
@@ -42,14 +36,10 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // ✅ Respond only once
-    res.status(201).json({
-      user: insertResult.rows[0],
-      groupAssigned
-    });
+    return res.status(201).json({ success: true });
   } catch (err) {
     console.error('Failed to add user to waiting list:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
