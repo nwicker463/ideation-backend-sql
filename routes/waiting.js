@@ -24,23 +24,22 @@ router.post('/', async (req, res) => {
 
     let groupAssigned = false;
 
-    // If there are 3 waiting users, assign a group
-    if (waitingResult.rows.length >= 3) {
+    if (result.rows.length >= 3) {
       const group = await db.query(
         'INSERT INTO groups (name) VALUES ($1) RETURNING id',
         [`Group ${Date.now()}`]
       );
       const groupId = group.rows[0].id;
 
-      const usersToAssign = waitingResult.rows.slice(0, 3);
-      for (const user of usersToAssign) {
+      const usersToAssign = result.rows.slice(0, 3);
+      const labels = ['User A', 'User B', 'User C'];
+
+      for (let i = 0; i < usersToAssign.length; i++) {
         await db.query(
-          'UPDATE waiting_users SET group_id = $1 WHERE id = $2',
-          [groupId, user.id]
+          'UPDATE waiting_users SET group_id = $1, label = $2 WHERE id = $3',
+          [groupId, labels[i], usersToAssign[i].id]
         );
       }
-
-      groupAssigned = true;
     }
 
     // ✅ Respond only once
