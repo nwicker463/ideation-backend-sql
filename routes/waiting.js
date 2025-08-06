@@ -54,12 +54,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get group assignment for a user
 router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
   try {
     const result = await db.query(
-      'SELECT group_id FROM waiting_users WHERE user_id = $1',
+      'SELECT group_id, label FROM waiting_users WHERE user_id = $1',
       [userId]
     );
 
@@ -69,7 +68,8 @@ router.get('/:userId', async (req, res) => {
       return res.status(404).json({ error: 'User not found in waiting list' });
     }
 
-    res.json({ groupId: result.rows[0].group_id });
+    const { group_id, label } = result.rows[0];
+    res.json({ groupId: group_id, label });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
