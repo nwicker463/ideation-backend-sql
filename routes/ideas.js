@@ -1,6 +1,15 @@
 const express = require('express');
+const cors = require('cors');
 const router = express.Router();
 const db = require('../db');
+
+router.use(cors({
+  origin: 'https://ideation-vite-frontend.vercel.app',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
+// your GET & POST routes...
 
 
 
