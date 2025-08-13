@@ -63,12 +63,24 @@ router.get('/group/:groupId/tree', async (req, res) => {
 
 // Post a new idea to a specific group
 router.post('/group/:groupId', async (req, res) => {
+  console.log('POST /group/:groupId called');
+  console.log('Body:', req.body);
+  console.log('Group ID param:', req.params.groupId);
+  
+  const { content, parentId, userId } = req.body;
   const { groupId } = req.params;
-  const { content, parentId, label } = req.body;
-  await db.query(
-    'INSERT INTO ideas (content, parent_id, group_id, contributor_label) VALUES ($1, $2, $3, $4) RETURNING *',
-    [content, parentId || null, groupId, label]
-  );
+
+  try {
+    const result = await db.query(
+      'INSERT INTO ideas (content, parent_id, group_id, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
+      [content, parentId || null, groupId, userId]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error inserting idea:', err);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get('/summary/group/:groupId', async (req, res) => {
