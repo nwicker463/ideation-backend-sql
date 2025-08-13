@@ -8,7 +8,7 @@ const allowedOrigins = [
   'https://ideation-vite-frontend.vercel.app'
 ];
 
-app.use(cors({
+/* app.use(cors({
   origin: function (origin, callback) {
     // Allow undefined origin for mobile apps or curl requests
     if (!origin || allowedOrigins.includes(origin)) {
@@ -19,7 +19,16 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json()); */
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173", // local dev
+    "https://ideation-vite-frontend.vercel.app" // deployed frontend
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type"]
+}));
 
 const ideaRoutes = require('./routes/ideas');
 const groupRoutes = require('./routes/groups');
