@@ -29,6 +29,7 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"]
 }));
+app.use(express.json());
 
 const ideaRoutes = require('./routes/ideas');
 const groupRoutes = require('./routes/groups');
