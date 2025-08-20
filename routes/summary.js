@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-router.get('/summary/group/:groupId', async (req, res) => {
+router.get('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
   try {
     const result = await db.query(
