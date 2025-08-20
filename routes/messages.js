@@ -18,15 +18,23 @@ router.get('/group/:groupId', async (req, res) => {
 
 // Post a message to a group
 router.post('/group/:groupId', async (req, res) => {
-  const { content, userId, username } = req.body;
   const { groupId } = req.params;
+  const { content, userId, username } = req.body;
+
+  console.log("Chat content:", content, " username:", username, " userId:", userId);
+
+  if (!content) {
+    return res.status(400).json({ error: "No content" });
+  }
+
   try {
-    db.query(
-      'INSERT INTO messages (group_id, user_id, username, content) VALUES ($1, $2, $3, $4)',
+    const result = await db.query(
+      'INSERT INTO messages (group_id, user_id, username, content) VALUES ($1, $2, $3, $4) RETURNING *',
       [groupId, userId, username, content]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
+    console.error('Insert chat error:', err);
     res.status(500).json({ error: err.message });
   }
 });
