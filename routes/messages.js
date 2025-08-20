@@ -18,12 +18,12 @@ router.get('/group/:groupId', async (req, res) => {
 
 // Post a message to a group
 router.post('/group/:groupId', async (req, res) => {
-  const { username, content } = req.body;
+  const { content, userId, username } = req.body;
   const { groupId } = req.params;
   try {
-    const result = await db.query(
-      'INSERT INTO messages (group_id, username, content) VALUES ($1, $2, $3) RETURNING *',
-      [groupId, username, content]
+    db.query(
+      'INSERT INTO messages (group_id, user_id, username, content) VALUES ($1, $2, $3, $4)',
+      [groupId, userId, username, content]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
