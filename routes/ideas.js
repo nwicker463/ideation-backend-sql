@@ -13,19 +13,27 @@ router.use(cors({
 
 
 
-// Original flat list endpoint
+// Get all ideas for a specific group, with label
 router.get('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
   try {
     const result = await db.query(
-      'SELECT * FROM ideas WHERE group_id = $1 ORDER BY created_at ASC',
+      `
+      SELECT ideas.*, waiting_users.label AS contributor_label
+      FROM ideas
+      JOIN waiting_users ON ideas.user_id = waiting_users.user_id
+      WHERE ideas.group_id = $1
+      ORDER BY ideas.created_at ASC
+      `,
       [groupId]
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 // New tree-structured endpoint
 router.get('/group/:groupId/tree', async (req, res) => {
@@ -33,7 +41,13 @@ router.get('/group/:groupId/tree', async (req, res) => {
 
   try {
     const result = await db.query(
-      'SELECT * FROM ideas WHERE group_id = $1 ORDER BY created_at ASC',
+      `
+      SELECT ideas.*, waiting_users.label AS contributor_label
+      FROM ideas
+      JOIN waiting_users ON ideas.user_id = waiting_users.user_id
+      WHERE ideas.group_id = $1
+      ORDER BY ideas.created_at ASC
+      `,
       [groupId]
     );
 
