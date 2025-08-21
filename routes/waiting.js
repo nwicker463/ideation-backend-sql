@@ -43,10 +43,30 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Update user's heartbeat (last seen time)
+router.post('/:userId/heartbeat', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    await db.query(
+      'UPDATE waiting_users SET last_seen = NOW() WHERE user_id = $1',
+      [userId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to update heartbeat:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get all users in the waiting list
 router.get('/', async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM waiting_users');
+    const result = await db.query(
+      `SELECT * FROM waiting_users 
+      WHERE group_id IS NULL AND last_seen > NOW() - INTERVAL '10 seconds'
+      ORDER BY created_at ASC`
+    );
+
     res.json(result.rows);
   } catch (err) {
     console.error('Failed to fetch waiting users:', err);
