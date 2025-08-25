@@ -18,23 +18,33 @@ router.post('/', async (req, res) => {
       'SELECT * FROM waiting_users WHERE group_id IS NULL ORDER BY created_at ASC'
     );
 
-    if (waiting.rows.length >= 3) {
+    // Count ACTIVE users (heartbeat within 10s, not yet in group)
+    const activeUsers = await db.query(
+      `SELECT * FROM waiting_users 
+       WHERE group_id IS NULL 
+       AND last_seen > NOW() - INTERVAL '10 seconds'
+       ORDER BY created_at ASC`
+    );
+
+    // Require exactly 3 users before creating group
+    if (activeUsers.rows.length >= 3) {
       const group = await db.query(
         'INSERT INTO groups (name) VALUES ($1) RETURNING id',
         [`Group ${Date.now()}`]
       );
       const groupId = group.rows[0].id;
 
-      const usersToAssign = waiting.rows.slice(0, 3);
-      const labels = ['User A', 'User B', 'User C'];
-
-      for (let i = 0; i < usersToAssign.length; i++) {
+      // Assign the first 3 users into this new group
+      const usersToAssign = activeUsers.rows.slice(0, 3);
+      for (const [i, user] of usersToAssign.entries()) {
+        const label = i === 0 ? "User A" : i === 1 ? "User B" : "User C";
         await db.query(
           'UPDATE waiting_users SET group_id = $1, label = $2 WHERE id = $3',
-          [groupId, labels[i], usersToAssign[i].id]
+          [groupId, label, user.id]
         );
       }
     }
+
 
     return res.status(201).json({ success: true });
   } catch (err) {
