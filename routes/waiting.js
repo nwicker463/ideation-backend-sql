@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
     const activeUsers = await db.query(
       `SELECT * FROM waiting_users 
        WHERE group_id IS NULL 
-       AND last_seen > NOW() - INTERVAL '10 seconds'
+       AND last_heartbeat > NOW() - INTERVAL '10 seconds'
        ORDER BY created_at ASC`
     );
 
@@ -59,7 +59,7 @@ router.post('/:userId/heartbeat', async (req, res) => {
   const { userId } = req.params;
   try {
     await db.query(
-      'UPDATE waiting_users SET last_seen = NOW() WHERE user_id = $1',
+      'UPDATE waiting_users SET last_heartbeat = NOW() WHERE user_id = $1',
       [userId]
     );
     res.json({ success: true });
@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT * FROM waiting_users 
-      WHERE group_id IS NULL AND last_seen > NOW() - INTERVAL '10 seconds'
+      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '10 seconds'
       ORDER BY created_at ASC`
     );
 
