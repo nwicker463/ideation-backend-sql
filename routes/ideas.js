@@ -29,7 +29,7 @@ router.get('/group/:groupId', async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching ideas:", err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
