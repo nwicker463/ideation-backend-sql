@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get group timer start time
-router.get('/:id/timer', async (req, res) => {
+/*router.get('/:id/timer', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query(
@@ -83,6 +83,24 @@ router.post('/:groupId/start', async (req, res) => {
     console.error('Error starting timer:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
+});*/
+
+router.get('/:groupId/time', async (req, res) => {
+  const { groupId } = req.params;
+  const result = await db.query(
+    'SELECT start_time FROM groups WHERE id = $1',
+    [groupId]
+  );
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: 'Group not found' });
+  }
+
+  const startTime = result.rows[0].start_time;
+  const duration = 10 * 60 * 1000; // 10 minutes in ms
+  const endTime = new Date(startTime).getTime() + duration;
+
+  res.json({ endTime });
 });
+
 
 module.exports = router;
