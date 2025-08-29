@@ -18,13 +18,11 @@ router.get('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
   try {
     const result = await db.query(
-      `
-      SELECT ideas.*, waiting_users.label AS contributor_label
-      FROM ideas
-      JOIN waiting_users ON ideas.user_id = waiting_users.user_id
-      WHERE ideas.group_id = $1
-      ORDER BY ideas.created_at ASC
-      `,
+      `SELECT i.id, i.content, i.parent_id, i.group_id, i.user_id, w.label AS contributor_label
+       FROM ideas i
+       LEFT JOIN waiting_users w ON i.user_id = w.user_id
+       WHERE i.group_id = $1
+       ORDER BY i.id ASC`,
       [groupId]
     );
     res.json(result.rows);
