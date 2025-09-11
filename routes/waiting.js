@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
     // Require exactly 3 users before creating group
     if (activeUsers.rows.length >= 3) {
       const group = await db.query(
-        'INSERT INTO groups (name, start_time) VALUES ($1, NOW()) RETURNING id, start_time',
+        'INSERT INTO groups (name, created_at) VALUES ($1, NOW()) RETURNING id, created_at',
         [`Group ${Date.now()}`]
       );
       const groupId = group.rows[0].id;
