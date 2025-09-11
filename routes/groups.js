@@ -88,14 +88,14 @@ router.post('/:groupId/start', async (req, res) => {
 router.get('/:groupId/time', async (req, res) => {
   const { groupId } = req.params;
   const result = await db.query(
-    'SELECT start_time FROM groups WHERE id = $1',
+    'SELECT created_at FROM groups WHERE id = $1',
     [groupId]
   );
   if (result.rows.length === 0) {
     return res.status(404).json({ error: 'Group not found' });
   }
 
-  const startTime = result.rows[0].start_time;
+  const startTime = result.rows[0].created_at;
   const duration = 10 * 60 * 1000; // 10 minutes in ms
   const endTime = new Date(startTime).getTime() + duration;
 
