@@ -19,9 +19,9 @@ router.get('/group/:groupId', async (req, res) => {
 // Post a message to a group
 router.post('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
-  const { content, userId, username } = req.body;
+  const { content, userId} = req.body;
 
-  console.log("Chat content:", content, " username:", username, " userId:", userId);
+  console.log("Chat content:", content, " userId:", userId);
 
   if (!content) {
     return res.status(400).json({ error: "No content" });
@@ -29,8 +29,8 @@ router.post('/group/:groupId', async (req, res) => {
 
   try {
     const result = await db.query(
-      'INSERT INTO messages (group_id, user_id, username, content) VALUES ($1, $2, $3, $4) RETURNING *',
-      [groupId, userId, username, content]
+      'INSERT INTO messages (group_id, user_id, content) VALUES ($1, $2, $3, $4) RETURNING *',
+      [groupId, userId, content]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
