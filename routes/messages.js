@@ -29,7 +29,7 @@ router.post('/group/:groupId', async (req, res) => {
 
   try {
     const result = await db.query(
-      'INSERT INTO messages (group_id, user_id, content) VALUES ($1, $2, $3, $4) RETURNING *',
+      'INSERT INTO messages (group_id, user_id, content, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *',
       [groupId, userId, content]
     );
     res.status(201).json(result.rows[0]);
