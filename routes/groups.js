@@ -27,63 +27,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get group timer start time
-/*router.get('/:id/timer', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query(
-      'SELECT timer_start FROM groups WHERE id = $1',
-      [id]
-    );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
-
-    res.json({ timerStart: result.rows[0].timer_start });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Start the timer for a group
-router.post('/:id/timer/start', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await db.query(
-      'UPDATE groups SET timer_start = NOW() WHERE id = $1 RETURNING timer_start',
-      [id]
-    );
-    res.json({ timerStart: result.rows[0].timer_start });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Start timer when first user joins
-router.post('/:groupId/start', async (req, res) => {
-  const { groupId } = req.params;
-
-  try {
-    // Check if timer already exists
-    const existing = await db.query(
-      'SELECT * FROM group_timers WHERE group_id = $1',
-      [groupId]
-    );
-
-    if (existing.rows.length > 0) {
-      return res.json(existing.rows[0]); // Already started
-    }
-
-    // Start new timer
-    const result = await db.query(
-      'INSERT INTO group_timers (group_id, start_time) VALUES ($1, CURRENT_TIMESTAMP) RETURNING *',
-      [groupId]
-    );
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error starting timer:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});*/
 
 router.get('/:groupId/time', async (req, res) => {
   const { groupId } = req.params;

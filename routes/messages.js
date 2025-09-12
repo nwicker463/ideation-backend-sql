@@ -2,40 +2,45 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Get messages for a group
+// GET /api/messages/group/:groupId
 router.get('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
   try {
     const result = await db.query(
-      'SELECT * FROM messages WHERE group_id = $1 ORDER BY created_at ASC',
+      `SELECT m.id, m.content, m.created_at, m.user_id, w.label AS contributor_label
+       FROM messages m
+       LEFT JOIN waiting_users w ON m.user_id = w.user_id
+       WHERE m.group_id = $1
+       ORDER BY m.created_at ASC`,
       [groupId]
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Fetch chat error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Post a message to a group
+// POST /api/messages/group/:groupId
 router.post('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
-  const { content, userId} = req.body;
+  const { userId, content } = req.body;
 
-  console.log("Chat content:", content, " userId:", userId);
-
-  if (!content) {
-    return res.status(400).json({ error: "No content" });
+  if (!content || !userId) {
+    return res.status(400).json({ error: 'userId and content are required' });
   }
 
   try {
     const result = await db.query(
-      'INSERT INTO messages (group_id, user_id, content, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *',
+      `INSERT INTO messages (group_id, user_id, content, created_at) 
+       VALUES ($1, $2, $3, NOW()) 
+       RETURNING *`,
       [groupId, userId, content]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Insert chat error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
