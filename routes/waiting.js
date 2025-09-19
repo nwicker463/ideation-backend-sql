@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
       'SELECT * FROM waiting_users WHERE group_id IS NULL ORDER BY created_at ASC'
     );
 
-    // Count ACTIVE users (heartbeat within 10s, not yet in group)
+    // Count ACTIVE users (heartbeat within3s, not yet in group)
     const activeUsers = await db.query(
       `SELECT * FROM waiting_users 
        WHERE group_id IS NULL 
@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT * FROM waiting_users 
-      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '10 seconds'
+      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '3 seconds'
       ORDER BY created_at ASC`
     );
 
