@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
     const activeUsers = await db.query(
       `SELECT * FROM waiting_users 
        WHERE group_id IS NULL 
-       AND last_heartbeat > NOW() - INTERVAL '10 seconds'
+       AND last_heartbeat > NOW() - INTERVAL '3 seconds'
        ORDER BY created_at ASC`
     );
 
