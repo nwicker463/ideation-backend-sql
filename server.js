@@ -44,6 +44,7 @@ app.use('/api/summary', summaryRoutes);
 app.use('/api/waiting', waitingRoutes);
 
 const PORT = process.env.PORT || 5000;
+app.use('/api/waiting', require('./routes/waiting'));
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
