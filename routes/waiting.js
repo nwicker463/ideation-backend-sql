@@ -5,6 +5,7 @@ const db = require('../db');
 // Add a user to the waiting list
 router.post('/', async (req, res) => {
   const { userId } = req.body;
+  console.log("POST /api/waiting received:", req.body);
   console.log("Received userId:", userId);
   if (!userId) return res.status(400).json({ error: 'userId is required' });
 
