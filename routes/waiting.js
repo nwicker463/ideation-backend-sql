@@ -5,52 +5,33 @@ const db = require('../db');
 // Add a user to the waiting list
 router.post('/', async (req, res) => {
   const { userId } = req.body;
-  console.log("POST /api/waiting received:", req.body);
-  console.log("Received userId:", userId);
-  if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required' });
+  }
 
   try {
-    const result = await db.query(
-      'INSERT INTO waiting_users (user_id) VALUES ($1) RETURNING *',
+    // Insert only if not already present
+    const existing = await db.query(
+      'SELECT id FROM waiting_users WHERE user_id = $1',
       [userId]
     );
 
-    // Check if a group can be formed
-    const waiting = await db.query(
-      'SELECT * FROM waiting_users WHERE group_id IS NULL ORDER BY created_at ASC'
-    );
-
-    // Count ACTIVE users (heartbeat within3s, not yet in group)
-    const activeUsers = await db.query(
-      `SELECT * FROM waiting_users 
-       WHERE group_id IS NULL 
-       AND last_heartbeat > NOW() - INTERVAL '3 seconds'
-       ORDER BY created_at ASC`
-    );
-
-    // Require exactly 3 users before creating group
-    if (activeUsers.rows.length >= 3) {
-      const group = await db.query(
-        'INSERT INTO groups (name, created_at) VALUES ($1, NOW()) RETURNING id, created_at',
-        [`Group ${Date.now()}`]
+    if (existing.rows.length === 0) {
+      await db.query(
+        'INSERT INTO waiting_users (user_id) VALUES ($1)',
+        [userId]
       );
-      const groupId = group.rows[0].id;
-
-      // Assign the first 3 users into this new group
-      const usersToAssign = activeUsers.rows.slice(0, 3);
-      for (const [i, user] of usersToAssign.entries()) {
-        const label = i === 0 ? "User A" : i === 1 ? "User B" : "User C";
-        await db.query(
-          'UPDATE waiting_users SET group_id = $1, label = $2 WHERE id = $3',
-          [groupId, label, user.id]
-        );
-      }
+      console.log(`Added ${userId} to waiting_users`);
+    } else {
+      console.log(`${userId} was already in waiting_users`);
     }
 
+    // Always respond OK
+    return res.json({ success: true });
 
-    return res.status(201).json({ success: true });
   } catch (err) {
-    console.error('Failed to add user to waiting list:', err);
+    console.error('Failed inserting user:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
