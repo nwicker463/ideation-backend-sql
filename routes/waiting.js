@@ -88,23 +88,28 @@ router.get('/', async (req, res) => {
 
 router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
+
   try {
     const result = await db.query(
       'SELECT group_id, label FROM waiting_users WHERE user_id = $1',
       [userId]
     );
 
-    console.log('Fetched user info:', result.rows[0]);
-
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found in waiting list' });
+      // User not found → return "not yet registered", NOT an error
+      return res.json({ groupId: null, label: null });
     }
 
     const { group_id, label } = result.rows[0];
-    res.json({ groupId: group_id, label });
+
+    res.json({
+      groupId: group_id || null,
+      label: label || null
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error reading waiting user:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
