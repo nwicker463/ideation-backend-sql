@@ -23,12 +23,40 @@ router.post('/', async (req, res) => {
         'INSERT INTO waiting_users (user_id) VALUES ($1)',
         [userId]
       );
-      console.log(`Added ${userId} to waiting_users`);
+      console.log(`✅ Added ${userId} to waiting_users`);
     } else {
-      console.log(`${userId} was already in waiting_users`);
+      console.log(`ℹ️ ${userId} already in waiting_users`);
     }
 
-    // Always respond OK
+    // ✅ Group formation logic
+    const waiting = await db.query(`
+      SELECT id, user_id
+      FROM waiting_users
+      WHERE group_id IS NULL 
+      AND last_heartbeat > NOW() - INTERVAL '3 seconds'
+      ORDER BY created_at ASC
+    `);
+
+    if (waiting.rows.length >= 3) {
+      const group = await db.query(
+        `INSERT INTO groups DEFAULT VALUES RETURNING id`
+      );
+      const groupId = group.rows[0].id;
+      const selected = waiting.rows.slice(0, 3);
+      const labels = ['User A', 'User B', 'User C'];
+
+      for (let i = 0; i < selected.length; i++) {
+        await db.query(
+          `UPDATE waiting_users 
+           SET group_id = $1, label = $2 
+           WHERE id = $3`,
+          [groupId, labels[i], selected[i].id]
+        );
+      }
+
+      console.log(`🎉 Formed group ${groupId}:`, selected.map(u => u.user_id));
+    }
+
     return res.json({ success: true });
 
   } catch (err) {
@@ -37,7 +65,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update user's heartbeat (last seen time)
+// Heartbeat
 router.post('/:userId/heartbeat', async (req, res) => {
   const { userId } = req.params;
   try {
@@ -52,22 +80,7 @@ router.post('/:userId/heartbeat', async (req, res) => {
   }
 });
 
-// Get all users in the waiting list
-router.get('/', async (req, res) => {
-  try {
-    const result = await db.query(
-      `SELECT * FROM waiting_users 
-      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '3 seconds'
-      ORDER BY created_at ASC`
-    );
-
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Failed to fetch waiting users:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
+// Poll group assignment
 router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
 
@@ -78,7 +91,6 @@ router.get('/:userId', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      // User not found → return "not yet registered", NOT an error
       return res.json({ groupId: null, label: null });
     }
 
@@ -94,6 +106,5 @@ router.get('/:userId', async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 module.exports = router;
