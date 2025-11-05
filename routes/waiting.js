@@ -28,34 +28,8 @@ router.post('/', async (req, res) => {
       console.log(`${userId} was already in waiting_users`);
     }
 
-        // ✅ Group formation logic
-    const waiting = await db.query(`
-      SELECT id, user_id
-      FROM waiting_users
-      WHERE group_id IS NULL 
-      AND last_heartbeat > NOW() - INTERVAL '3 seconds'
-      ORDER BY created_at ASC
-    `);
 
-    if (waiting.rows.length >= 3) {
-      const group = await db.query(
-        `INSERT INTO groups DEFAULT VALUES RETURNING id`
-      );
-      const groupId = group.rows[0].id;
-      const selected = waiting.rows.slice(0, 3);
-      const labels = ['User A', 'User B', 'User C'];
 
-      for (let i = 0; i < selected.length; i++) {
-        await db.query(
-          `UPDATE waiting_users 
-           SET group_id = $1, label = $2 
-           WHERE id = $3`,
-          [groupId, labels[i], selected[i].id]
-        );
-      }
-
-      console.log(`🎉 Formed group ${groupId}:`, selected.map(u => u.user_id));
-    }
     // Always respond OK
     return res.json({ success: true });
 
