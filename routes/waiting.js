@@ -96,6 +96,52 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Automatically form groups of 3
+router.post('/check-group', async (req, res) => {
+  try {
+    // Get active unassigned users
+    const waiting = await db.query(
+      `SELECT id, user_id FROM waiting_users
+       WHERE group_id IS NULL 
+       AND last_heartbeat > NOW() - INTERVAL '5 seconds'
+       ORDER BY created_at ASC`
+    );
+
+    if (waiting.rows.length >= 3) {
+      const usersToAssign = waiting.rows.slice(0, 3);
+
+      // Create new group
+      const group = await db.query(
+        `INSERT INTO groups (name) VALUES ($1) RETURNING id`,
+        [`Group ${Date.now()}`]
+      );
+
+      const groupId = group.rows[0].id;
+
+      // Assign labels
+      const labels = ["User A", "User B", "User C"];
+
+      for (let i = 0; i < 3; i++) {
+        await db.query(
+          `UPDATE waiting_users 
+           SET group_id = $1, label = $2
+           WHERE id = $3`,
+          [groupId, labels[i], usersToAssign[i].id]
+        );
+      }
+
+      console.log(`✅ Formed group ${groupId}`);
+      return res.json({ formed: true, groupId });
+    }
+
+    res.json({ formed: false });
+
+  } catch (err) {
+    console.error("❌ Group formation error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
 
