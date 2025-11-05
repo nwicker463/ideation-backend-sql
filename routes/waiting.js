@@ -85,7 +85,7 @@ router.get('/', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT * FROM waiting_users 
-      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '3 seconds'
+      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '10 seconds'
       ORDER BY created_at ASC`
     );
 
