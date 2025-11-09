@@ -70,50 +70,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Automatically form groups of 3
-router.post('/check-group', async (req, res) => {
-  try {
-    // Check if we have 3+ ungrouped users
-    const waiting = await db.query(`
-      SELECT id, user_id FROM waiting_users 
-      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '3 seconds'
-      ORDER BY created_at ASC
-      LIMIT 3
-    `);
-
-    if (waiting.rows.length === 3) {
-      console.log("✅ Forming new group with:", waiting.rows.map(u => u.user_id));
-
-      // 1) Create a new group, letting Postgres assign group_id
-      const groupResult = await db.query(`
-        INSERT INTO groups DEFAULT VALUES
-        RETURNING id
-      `);
-
-      const groupId = groupResult.rows[0].id; // <- integer group ID
-
-      // 2) Assign labels A, B, C
-      const labels = ['A', 'B', 'C'];
-
-      // 3) Update these users to belong to the new group
-      for (let i = 0; i < waiting.rows.length; i++) {
-        await db.query(`
-          UPDATE waiting_users 
-          SET group_id = $1, label = $2 
-          WHERE id = $3
-        `, [groupId, labels[i], waiting.rows[i].id]);
-      }
-
-      console.log(`🎉 Assigned group ${groupId} to users:`, waiting.rows.map(u => u.user_id));
-    }
-
-    res.json({ formed: false });
-
-  } catch (err) {
-    console.error("❌ Group formation error:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
 
 router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
@@ -142,5 +98,48 @@ router.get('/:userId', async (req, res) => {
   }
 });
 
+// Check whether enough users are waiting to form a group
+router.post('/check-group', async (req, res) => {
+  try {
+    // Get the oldest 3 active waiting users
+    const waiting = await db.query(`
+      SELECT id, user_id FROM waiting_users
+      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '5 seconds'
+      ORDER BY created_at ASC
+      LIMIT 3
+    `);
+
+    if (waiting.rows.length < 3) {
+      return res.json({ formed: false });
+    }
+
+    console.log("✅ Forming new group with:", waiting.rows.map(u => u.user_id));
+
+    // Create a group and let Postgres auto-assign the integer ID
+    const groupResult = await db.query(`
+      INSERT INTO groups DEFAULT VALUES RETURNING id
+    `);
+    const groupId = groupResult.rows[0].id;
+
+    const labels = ['A', 'B', 'C'];
+
+    // Assign the group_id + unique labels
+    for (let i = 0; i < waiting.rows.length; i++) {
+      await db.query(`
+        UPDATE waiting_users
+        SET group_id = $1, label = $2
+        WHERE id = $3
+      `, [groupId, labels[i], waiting.rows[i].id]);
+    }
+
+    console.log(`🎉 Group ${groupId} formed and assigned successfully.`);
+
+    return res.json({ formed: true, groupId });
+
+  } catch (err) {
+    console.error("❌ check-group error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 module.exports = router;
