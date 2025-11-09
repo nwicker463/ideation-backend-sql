@@ -54,50 +54,6 @@ router.post('/:userId/heartbeat', async (req, res) => {
   }
 });
 
-// Get all users in the waiting list
-router.get('/', async (req, res) => {
-  try {
-    const result = await db.query(
-      `SELECT * FROM waiting_users 
-      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '10 seconds'
-      ORDER BY created_at ASC`
-    );
-
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Failed to fetch waiting users:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-
-router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
-
-  try {
-    const result = await db.query(
-      'SELECT group_id, label FROM waiting_users WHERE user_id = $1',
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
-      // User not found → return "not yet registered", NOT an error
-      return res.json({ groupId: null, label: null });
-    }
-
-    const { group_id, label } = result.rows[0];
-
-    res.json({
-      groupId: group_id || null,
-      label: label || null
-    });
-
-  } catch (err) {
-    console.error("Error reading waiting user:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 // Check whether enough users are waiting to form a group
 router.post('/check-group', async (req, res) => {
   try {
@@ -139,6 +95,50 @@ router.post('/check-group', async (req, res) => {
   } catch (err) {
     console.error("❌ check-group error:", err);
     return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get all users in the waiting list
+router.get('/', async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT * FROM waiting_users 
+      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '10 seconds'
+      ORDER BY created_at ASC`
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Failed to fetch waiting users:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+router.get('/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const result = await db.query(
+      'SELECT group_id, label FROM waiting_users WHERE user_id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      // User not found → return "not yet registered", NOT an error
+      return res.json({ groupId: null, label: null });
+    }
+
+    const { group_id, label } = result.rows[0];
+
+    res.json({
+      groupId: group_id || null,
+      label: label || null
+    });
+
+  } catch (err) {
+    console.error("Error reading waiting user:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
