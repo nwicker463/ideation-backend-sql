@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { v4: uuidv4 } = require('uuid');
 
 // Add a user to the waiting list
 router.post('/', async (req, res) => {
@@ -74,29 +73,38 @@ router.get('/', async (req, res) => {
 // Automatically form groups of 3
 router.post('/check-group', async (req, res) => {
   try {
-    // Find users whose last heartbeat is fresh
-    const freshUsers = await db.query(`
-      SELECT user_id FROM waiting_users
-      WHERE group_id IS NULL
-      AND last_heartbeat > NOW() - INTERVAL '5 seconds'
+    // Check if we have 3+ ungrouped users
+    const waiting = await db.query(`
+      SELECT id, user_id FROM waiting_users 
+      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '3 seconds'
       ORDER BY created_at ASC
-      LIMIT 3;
+      LIMIT 3
     `);
 
-    if (freshUsers.rows.length === 3) {
-      const groupId = uuidv4();
-      const labels = ['A','B','C']; // or however you label
+    if (waiting.rows.length === 3) {
+      console.log("✅ Forming new group with:", waiting.rows.map(u => u.user_id));
 
-      for (let i = 0; i < 3; i++) {
-        await db.query(
-          `UPDATE waiting_users
-          SET group_id = $1, label = $2
-          WHERE user_id = $3`,
-          [groupId, labels[i], freshUsers.rows[i].user_id]
-        );
+      // 1) Create a new group, letting Postgres assign group_id
+      const groupResult = await db.query(`
+        INSERT INTO groups DEFAULT VALUES
+        RETURNING id
+      `);
+
+      const groupId = groupResult.rows[0].id; // <- integer group ID
+
+      // 2) Assign labels A, B, C
+      const labels = ['A', 'B', 'C'];
+
+      // 3) Update these users to belong to the new group
+      for (let i = 0; i < waiting.rows.length; i++) {
+        await db.query(`
+          UPDATE waiting_users 
+          SET group_id = $1, label = $2 
+          WHERE id = $3
+        `, [groupId, labels[i], waiting.rows[i].id]);
       }
 
-      console.log("✅ Group formed:", groupId, freshUsers.rows.map(r => r.user_id));
+      console.log(`🎉 Assigned group ${groupId} to users:`, waiting.rows.map(u => u.user_id));
     }
 
     res.json({ formed: false });
