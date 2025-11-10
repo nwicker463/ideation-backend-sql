@@ -4,7 +4,6 @@ const db = require('../db');
 
 // Add a user to the waiting list
 router.post('/', async (req, res) => {
-  
   const { userId } = req.body;
 
   if (!userId) {
@@ -27,8 +26,6 @@ router.post('/', async (req, res) => {
     } else {
       console.log(`${userId} was already in waiting_users`);
     }
-
-
 
     // Always respond OK
     return res.json({ success: true });
@@ -55,42 +52,46 @@ router.post('/', async (req, res) => {
 });*/
 
 // Check whether enough users are waiting to form a group
-router.post('/check-group', async (req, res) => {
+router.post("/check-group", async (req, res) => {
   try {
-    // Get the oldest 3 active waiting users
-    const waiting = await db.query(`
-      SELECT id, user_id FROM waiting_users
-      WHERE group_id IS NULL
-      ORDER BY created_at ASC
-      LIMIT 3
-    `);
+    const { rows } = await db.query(
+      `SELECT user_id FROM waiting_users
+       WHERE group_id IS NULL
+       ORDER BY created_at ASC`
+    );
 
-    if (rows.length >= 3) {
-      const groupUsers = rows.slice(0, 3);
-      const newGroupId = Math.round(Date.now() / 1000);
-
-      await db.query(
-        `UPDATE waiting_users
-        SET group_id = $1, label = CASE
-          WHEN user_id = $2 THEN 'User A'
-          WHEN user_id = $3 THEN 'User B'
-          WHEN user_id = $4 THEN 'User C'
-        END
-        WHERE user_id IN ($2, $3, $4)`,
-        [newGroupId, groupUsers[0].user_id, groupUsers[1].user_id, groupUsers[2].user_id]
-      );
-
-      return res.json({ groupId: newGroupId });
+    if (rows.length < 3) {
+      return res.json({ groupFormed: false });
     }
 
+    // Take the first three
+    const groupUsers = rows.slice(0, 3);
+    const groupId = Math.floor(Date.now() / 1000); // simple integer group id
+
+    // Assign labels
+    await db.query(
+      `UPDATE waiting_users
+       SET group_id = $1, label = CASE
+         WHEN user_id = $2 THEN 'User A'
+         WHEN user_id = $3 THEN 'User B'
+         WHEN user_id = $4 THEN 'User C'
+       END
+       WHERE user_id IN ($2, $3, $4)`,
+      [groupId, groupUsers[0].user_id, groupUsers[1].user_id, groupUsers[2].user_id]
+    );
+
+    console.log(`🎉 GROUP FORMED: ${groupId}`);
+    console.log("Users:", groupUsers.map(u => u.user_id));
+
+    return res.json({ groupFormed: true });
   } catch (err) {
-    console.error("❌ check-group error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Error forming group:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 // Get all users in the waiting list
-router.get('/', async (req, res) => {
+/*router.get('/', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT * FROM waiting_users 
@@ -103,7 +104,7 @@ router.get('/', async (req, res) => {
     console.error('Failed to fetch waiting users:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
-});
+});*/
 
 
 router.get('/:userId', async (req, res) => {
