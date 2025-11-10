@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update user's heartbeat (last seen time)
-router.post('/:userId/heartbeat', async (req, res) => {
+/*router.post('/:userId/heartbeat', async (req, res) => {
   const { userId } = req.params;
   try {
     await db.query(
@@ -52,7 +52,7 @@ router.post('/:userId/heartbeat', async (req, res) => {
     console.error('Failed to update heartbeat:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
-});
+});*/
 
 // Check whether enough users are waiting to form a group
 router.post('/check-group', async (req, res) => {
@@ -60,37 +60,28 @@ router.post('/check-group', async (req, res) => {
     // Get the oldest 3 active waiting users
     const waiting = await db.query(`
       SELECT id, user_id FROM waiting_users
-      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '10 seconds'
+      WHERE group_id IS NULL
       ORDER BY created_at ASC
       LIMIT 3
     `);
 
-    if (waiting.rows.length < 3) {
-      return res.json({ formed: false });
+    if (rows.length >= 3) {
+      const groupUsers = rows.slice(0, 3);
+      const newGroupId = Math.round(Date.now() / 1000);
+
+      await db.query(
+        `UPDATE waiting_users
+        SET group_id = $1, label = CASE
+          WHEN user_id = $2 THEN 'User A'
+          WHEN user_id = $3 THEN 'User B'
+          WHEN user_id = $4 THEN 'User C'
+        END
+        WHERE user_id IN ($2, $3, $4)`,
+        [newGroupId, groupUsers[0].user_id, groupUsers[1].user_id, groupUsers[2].user_id]
+      );
+
+      return res.json({ groupId: newGroupId });
     }
-
-    console.log("✅ Forming new group with:", waiting.rows.map(u => u.user_id));
-
-    // Create a group and let Postgres auto-assign the integer ID
-    const groupResult = await db.query(`
-      INSERT INTO groups DEFAULT VALUES RETURNING id
-    `);
-    const groupId = groupResult.rows[0].id;
-
-    const labels = ['A', 'B', 'C'];
-
-    // Assign the group_id + unique labels
-    for (let i = 0; i < waiting.rows.length; i++) {
-      await db.query(`
-        UPDATE waiting_users
-        SET group_id = $1, label = $2
-        WHERE id = $3
-      `, [groupId, labels[i], waiting.rows[i].id]);
-    }
-
-    console.log(`🎉 Group ${groupId} formed and assigned successfully.`);
-
-    return res.json({ formed: true, groupId });
 
   } catch (err) {
     console.error("❌ check-group error:", err);
@@ -103,7 +94,7 @@ router.get('/', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT * FROM waiting_users 
-      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '10 seconds'
+      WHERE group_id IS NULL
       ORDER BY created_at ASC`
     );
 
