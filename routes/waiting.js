@@ -60,7 +60,7 @@ router.post('/check-group', async (req, res) => {
     // Get the oldest 3 active waiting users
     const waiting = await db.query(`
       SELECT id, user_id FROM waiting_users
-      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '5 seconds'
+      WHERE group_id IS NULL AND last_heartbeat > NOW() - INTERVAL '10 seconds'
       ORDER BY created_at ASC
       LIMIT 3
     `);
