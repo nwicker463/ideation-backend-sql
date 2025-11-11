@@ -110,7 +110,7 @@ router.post("/check-group", async (req, res) => {
 router.get('/:userId', async (req, res) => {
   const { userId } = req.params;
 
-  try {
+  /*try {
     const result = await db.query(
       'SELECT group_id, label FROM waiting_users WHERE user_id = $1',
       [userId]
@@ -131,7 +131,44 @@ router.get('/:userId', async (req, res) => {
   } catch (err) {
     console.error("Error reading waiting user:", err);
     res.status(500).json({ error: "Internal server error" });
+  }*/
+ // FORM GROUPS OF EXACTLY 3 USERS
+  try {
+    // Get all waiting users who don't have a group yet
+    const waiting = await db.query(`
+      SELECT id, user_id
+      FROM waiting_users
+      WHERE group_id IS NULL
+      ORDER BY created_at ASC
+    `);
+
+    if (waiting.rows.length >= 3) {
+      // Create a new group
+      const groupResult = await db.query(
+        `INSERT INTO groups (name) VALUES ($1) RETURNING id`,
+        [`Group ${Date.now()}`]
+      );
+      const newGroupId = groupResult.rows[0].id;
+
+      // Assign labels based on join order
+      const labels = ["User A", "User B", "User C"];
+
+      for (let i = 0; i < 3; i++) {
+        await db.query(
+          `UPDATE waiting_users
+          SET group_id = $1, label = $2
+          WHERE id = $3`,
+          [newGroupId, labels[i], waiting.rows[i].id]
+        );
+      }
+
+      console.log(`✅ Formed group ${newGroupId} with users:`, waiting.rows.slice(0, 3));
+    }
+
+  } catch (err) {
+    console.error("❌ Error forming group:", err);
   }
+
 });
 
 module.exports = router;
