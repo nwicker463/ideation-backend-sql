@@ -91,7 +91,7 @@ router.post('/', async (req, res) => {
 });*/
 
 // Get all users in the waiting list
-/*router.get('/', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT * FROM waiting_users 
@@ -104,7 +104,7 @@ router.post('/', async (req, res) => {
     console.error('Failed to fetch waiting users:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
-});*/
+});
 
 
 router.get('/:userId', async (req, res) => {
