@@ -52,7 +52,7 @@ router.post('/', async (req, res) => {
 });*/
 
 // Check whether enough users are waiting to form a group
-router.post("/check-group", async (req, res) => {
+/*router.post("/check-group", async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT user_id FROM waiting_users
@@ -88,7 +88,7 @@ router.post("/check-group", async (req, res) => {
     console.error("❌ Error forming group:", err);
     res.status(500).json({ error: "Internal server error" });
   }
-});
+});*/
 
 // Get all users in the waiting list
 /*router.get('/', async (req, res) => {
@@ -167,6 +167,7 @@ router.get('/:userId', async (req, res) => {
 
   } catch (err) {
     console.error("❌ Error forming group:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 
 });
