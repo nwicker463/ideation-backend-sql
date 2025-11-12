@@ -164,7 +164,10 @@ router.get('/:userId', async (req, res) => {
 
       console.log(`✅ Formed group ${newGroupId} with users:`, waiting.rows.slice(0, 3));
     }
-
+    res.json({
+      group_id: group_id || null,
+      label: label || null
+    });
   } catch (err) {
     console.error("❌ Error forming group:", err);
     res.status(500).json({ error: "Internal server error" });
