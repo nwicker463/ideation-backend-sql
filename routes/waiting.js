@@ -142,7 +142,7 @@ router.get('/:userId', async (req, res) => {
       ORDER BY created_at ASC
     `);
 
-    if (waiting.rows.length >= 3) {
+    if (waiting.rows.length >= 2) {
       // Create a new group
       const groupResult = await db.query(
         `INSERT INTO groups (name) VALUES ($1) RETURNING id`,
@@ -153,7 +153,7 @@ router.get('/:userId', async (req, res) => {
       // Assign labels based on join order
       const labels = ["User A", "User B", "User C"];
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 2; i++) {
         await db.query(
           `UPDATE waiting_users
           SET group_id = $1, label = $2
@@ -162,7 +162,7 @@ router.get('/:userId', async (req, res) => {
         );
       }
 
-      console.log(`✅ Formed group ${newGroupId} with users:`, waiting.rows.slice(0, 3));
+      console.log(`✅ Formed group ${newGroupId} with users:`, waiting.rows.slice(0, 2));
     }
     const result = await db.query(
       'SELECT group_id, label FROM waiting_users WHERE user_id = $1',
