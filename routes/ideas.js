@@ -82,22 +82,10 @@ router.post('/group/:groupId', async (req, res) => {
   const { content, parentId, userId } = req.body;
   const { groupId } = req.params;
 
-  /*try {
+  try {
     const result = await db.query(
       'INSERT INTO ideas (content, parent_id, group_id, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
       [content, parentId || null, groupId, userId]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error inserting idea:', err);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.status(500).json({ error: err.message });
-  }*/
-
-    try {
-    const result = await db.query(
-      'INSERT INTO ideas (content, parent_id, group_id, contributor_label, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [content, parentId || null, groupId, currentUserLabel, userId]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
