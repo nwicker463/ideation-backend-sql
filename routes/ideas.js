@@ -84,8 +84,8 @@ router.post('/group/:groupId', async (req, res) => {
 
   try {
     const result = await db.query(
-      'INSERT INTO ideas (content, parent_id, group_id, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
-      [content, parentId || null, groupId, userId]
+      'INSERT INTO ideas (content, parent_id, group_id, contributor_label, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [content, parentId || null, groupId, currentUserLabel, userId]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
