@@ -79,13 +79,18 @@ router.post('/group/:groupId', async (req, res) => {
   console.log('Body:', req.body);
   console.log('Group ID param:', req.params.groupId);
   
-  const { content, parentId, groupId, userLabel, userId } = req.body;
-  //const { groupId } = req.params;
+  const {
+    content,
+    parent_id,
+    group_id,
+    contributor_label,
+    user_id
+  } = req.body;
 
   try {
     const result = await db.query(
       'INSERT INTO ideas (content, parent_id, group_id, contributor_label, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [content, parentId || null, groupId, userLabel, userId]
+      [content, parent_id || null, group_id, contributor_label, user_id]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
