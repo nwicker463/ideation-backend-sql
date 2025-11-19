@@ -79,8 +79,8 @@ router.post('/group/:groupId', async (req, res) => {
   console.log('Body:', req.body);
   console.log('Group ID param:', req.params.groupId);
   
-  const { content, parentId, userId } = req.body;
-  const { groupId } = req.params;
+  const { content, parentId, groupId, userLabel, userId } = req.body;
+  //const { groupId } = req.params;
 
   try {
     const result = await db.query(
