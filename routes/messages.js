@@ -7,7 +7,7 @@ router.get('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
   try {
     const result = await db.query(
-      `SELECT m.id, m.content, m.created_at, m.user_id, w.label AS contributor_label
+      `SELECT m.id, m.message, m.created_at, m.user_id, w.label AS contributor_label
        FROM messages m
        LEFT JOIN waiting_users w ON m.user_id = w.user_id
        WHERE m.group_id = $1
@@ -24,18 +24,18 @@ router.get('/group/:groupId', async (req, res) => {
 // POST /api/messages/group/:groupId
 router.post('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
-  const { userId, content } = req.body;
+  const { userId, message } = req.body;
 
-  if (!content || !userId) {
-    return res.status(400).json({ error: 'userId and content are required' });
+  if (!message || !userId) {
+    return res.status(400).json({ error: 'userId and message are required' });
   }
 
   try {
     const result = await db.query(
-      `INSERT INTO messages (group_id, user_id, content, created_at) 
+      `INSERT INTO messages (group_id, user_id, message, created_at) 
        VALUES ($1, $2, $3, NOW()) 
        RETURNING *`,
-      [groupId, userId, content]
+      [groupId, userId, message]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
