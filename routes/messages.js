@@ -7,9 +7,9 @@ router.get('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
   try {
     const result = await db.query(
-      `SELECT m.id, m.content, m.created_at, m.contributor_label, w.label AS contributor_label
+      `SELECT m.id, m.content, m.created_at, m.user_id, w.label AS contributor_label
        FROM messages m
-       LEFT JOIN waiting_users w ON m.contributor_label = w.contributor_label
+       LEFT JOIN waiting_users w ON m.user_id = w.user_id
        WHERE m.group_id = $1
        ORDER BY m.created_at ASC`,
       [groupId]
@@ -32,7 +32,7 @@ router.post('/group/:groupId', async (req, res) => {
 
   try {
     const result = await db.query(
-      `INSERT INTO messages (group_id, contributor_label, content, created_at) 
+      `INSERT INTO messages (group_id, user_id, content, created_at) 
        VALUES ($1, $2, $3, NOW()) 
        RETURNING *`,
       [groupId, userId, content]
