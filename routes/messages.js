@@ -24,7 +24,7 @@ router.get('/group/:groupId', async (req, res) => {
 // POST /api/messages/group/:groupId
 router.post('/group/:groupId', async (req, res) => {
   const { groupId } = req.params;
-  const { userId, message } = req.body;
+  const { userId, message, contributorLabel } = req.body;
 
   if (!message || !userId) {
     return res.status(400).json({ error: 'userId and message are required' });
@@ -32,10 +32,10 @@ router.post('/group/:groupId', async (req, res) => {
 
   try {
     const result = await db.query(
-      `INSERT INTO messages (group_id, user_id, message, created_at) 
-       VALUES ($1, $2, $3, NOW()) 
+      `INSERT INTO messages (group_id, user_id, message, contributor_label, created_at, ) 
+       VALUES ($1, $2, $3, $4, NOW()) 
        RETURNING *`,
-      [groupId, userId, message]
+      [groupId, userId, message, contributorLabel]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
