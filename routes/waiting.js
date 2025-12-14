@@ -162,7 +162,7 @@ router.get('/:userId', async (req, res) => {
         );
       }
 
-      console.log(`✅ Formed group ${newGroupId} with users:`, waiting.rows.slice(0, 2));
+      console.log(`✅ Formed group ${newGroupId} with users:`, waiting.rows.slice(0, 3).map(u => u.user_id));
     }
     const result = await db.query(
       'SELECT group_id, label FROM waiting_users WHERE user_id = $1',
