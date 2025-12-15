@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update user's heartbeat (last seen time)
-/*router.post('/:userId/heartbeat', async (req, res) => {
+router.post('/:userId/heartbeat', async (req, res) => {
   const { userId } = req.params;
   try {
     await db.query(
@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
     console.error('Failed to update heartbeat:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
-});*/
+});
 
 // Check whether enough users are waiting to form a group
 /*router.post("/check-group", async (req, res) => {
