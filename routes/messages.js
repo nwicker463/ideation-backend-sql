@@ -32,7 +32,7 @@ router.post('/group/:groupId', async (req, res) => {
 
   try {
     const result = await db.query(
-      `INSERT INTO messages (group_id, user_id, message, contributor_label, created_at, ) 
+      `INSERT INTO messages (group_id, user_id, message, contributor_label, created_at ) 
        VALUES ($1, $2, $3, $4, NOW()) 
        RETURNING *`,
       [groupId, userId, message, contributorLabel]
