@@ -51,6 +51,30 @@ router.post('/:userId/heartbeat', async (req, res) => {
   }
 });
 
+setInterval(async () => {
+  try {
+    const result = await db.query(`
+      DELETE FROM waiting_users
+      WHERE last_heartbeat < NOW() - INTERVAL '30 seconds'
+        AND group_id IS NULL
+      RETURNING user_id
+    `);
+
+    if (result.rows.length > 0) {
+      console.log(
+        '🧹 Removed inactive users:',
+        result.rows.map(r => r.user_id)
+      );
+    }
+  } catch (err) {
+    console.error('Heartbeat cleanup failed:', err);
+  }
+}, 10000);
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log('Server running');
+});
+
 // Check whether enough users are waiting to form a group
 /*router.post("/check-group", async (req, res) => {
   try {
