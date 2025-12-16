@@ -63,7 +63,7 @@ setInterval(async () => {
   } catch (err) {
     console.error('Heartbeat cleanup failed:', err);
   }
-}, 5000);
+}, 2000);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
